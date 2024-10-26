@@ -21,14 +21,24 @@ static struct cdev dev; // 创建一个 字驱动表"存储结构体"(提供cdev
 
 static int my_open(struct inode *inode, struct file *fp){
   // 具体实现"打开文件"的方法
+  /* 
+  这里的 "*inode"即指在打开文件时，内核为该文件分配的一个inode结构体
+  "*fp" 即是之前记下的 '文件'指针 ("高级"文件描述符，直接封装了'打开 + 读写'的操作)，是指向内核的
+  */
+
   printk("文件(设备)" deviceName "已被打开\n");
   return 0;
+
 }
 
 static int my_read(struct file *fp, char *buf, size_t count, loff_t * position){
   // 具体"读取文件"的方法
-  // 注意这里的 *buf ，它只是一个user level的指针，指向了 用户空间的"接收buffer"
-  
+  /*
+    注意这里的 *buf ，它只是一个user level的指针，指向了 用户空间的"接收buffer"
+    count: 定义了"用户要读的长度" (用户空间传过来)
+    position: 一个指向"当前文件"偏移量的指针
+   */
+
   int numRead; // 定义"要读字节"的值(如果用户定义了的话)
   int copyReturn; // 定义"copy_to_user()"方法的操作结果 (返回值)
 
@@ -52,6 +62,7 @@ static int my_read(struct file *fp, char *buf, size_t count, loff_t * position){
 
 static int my_close(struct inode *inode, struct file *fp){
   // 具体"关闭文件"的方法
+  /*此处的参数同my_open()一致*/
   printk("文件(设备)" deviceName "已被关闭\n");
   return 0;
 }
@@ -90,8 +101,8 @@ int __init hellodriver_init(void){
   cdev.init(&dev, &fops); // 这里就相当于将这个"驱动文件"的 FDT表(操作请求) -> 系统SFT表(系统对应的操作方法) 做映射
   // cdev.init(存储字驱动表的"结构体对象"，该字驱动的"操作项结构体" [不同的可用操作方法, SFT表 -> inode表])
 
-  // 一旦上面的init完成，之前声明的dev就成了一个 可用的"字驱动表"，接下来就是对这个驱动表做一些"补充设置"
-  dev.owner = THIS_MODULE;
+  // 一旦上面的init完成，我们需要提前为将来存在里面的"设备"做一些额外的声明
+  dev.owner = THIS_MODULE; // 声明里面"设备"的所有者为该module(THIS_MODULE)
   
   // 一旦有了字驱动表，我们就可以往表里"add()设备"了
   int createResult; 
