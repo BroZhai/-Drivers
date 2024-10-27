@@ -1,0 +1,15 @@
+As you can see, we have hello.c, message.h, message.c shown in this directory.
+To make compilation of hello.c, hello.c and message.c should be firstly compiled.
+To do this, we may need the help from 'makefile':
+    1. Create a "M/makefile" (case sensitive)
+    2. Config the "makefile" with following format:
+        target(hell) : dependencies(hello.c, message.c)
+         (tab) actions
+            ...
+        e.g.
+        helloMakefile : hello.c message.c
+            gcc hello.c message.c -o helloMakefile
+
+The makefile will automatically check whether the dependencies have any changes since last compilation, and re-run the correspoind actions when dependencies are changed.
+
+Tips: using gedit or emacs for editing makefile. Using vim may encounter the 'mysterious tab' problem XD...
