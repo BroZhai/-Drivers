@@ -12,5 +12,5 @@
 #### A backup repository of System Programing
 Hmm... What an 'open-source' platform, is it? <br>
 But I still have to learn this due to the course requirement :( <br>
-*好一个'开源精神',爆了*
+*好一个'开源精神',爆了*<br>
 Oct 26th, 2024
