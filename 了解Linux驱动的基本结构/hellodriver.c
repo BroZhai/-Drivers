@@ -3,8 +3,14 @@
 // (Tips: 在Linux驱动文件时，我们所处的环境是"内核环境",所以一般"用户环境的库"我们就用不了力)
 
 #include <linux/types.h> 
-#include <linux/string.h> //my_open()中的"strlen"用到了这个库
+#include <linux/string.h> // my_open()中的"strlen"用到了这个库
+#include <linux/module.h> // MODULE_LICENSE / AUTHOR / DESCRIPTION 用到的库
+#include <linux/init.h> // module_init() 用到的库 __init 和 __exit也在这里被定义了
+
 // header files暂时不全，下节课继续补充
+/*Tips: 在定义的时候，"/linux 前面还会有个include"(e.g. <include/linux/module.h> )，但是我们可以偷懒不写owo...
+  因为一般 这个<include>库就会在makefile中配置好，因此这里就不用费劲去上面一个个的再加include了
+*/ 
 
 #define startNumber 3; // 定好"次设备号"起始号
 #define deviceCounts 2; // 定好"次设备数量"
