@@ -1,5 +1,5 @@
 # 李利克斯Drivers
-![coolPenguin.jpg](coolPenguin.jpg "酷企鹅")<br>
+![coolPenguin.png](coolPenguin.png "酷企鹅")<br>
 我累个豆，李利克斯(linux)写驱动(? <br>
 *我 是 超 级 臃 肿 带 企 鹅* .·´¯(>▂<)¯`·. <br>
 又是一个神奇的课...<br>
