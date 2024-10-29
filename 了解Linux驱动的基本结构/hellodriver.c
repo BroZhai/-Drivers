@@ -105,7 +105,7 @@ int __init hellodriver_init(void){
     return returnValue; // 返回终止程序
   }
 
-  major = MAJOR(devnoStorage); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
+  int major = MAJOR(devnoStorage); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
   printk("设备" deviceName "初始化完成, 取得的主设备号为%d \n", major);
 
   // 接下来，我们来看看如何建立(注册)一个 字驱动表
