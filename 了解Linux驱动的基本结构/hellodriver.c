@@ -2,10 +2,15 @@
 // 咱来看看是这个"配置"囊个回事?
 // (Tips: 在Linux驱动文件时，我们所处的环境是"内核环境",所以一般"用户环境的库"我们就用不了力)
 
-#include <linux/types.h> 
+#include <linux/types.h>  // dev_t size_t loft_t 等各种'奇怪的类型' 就被定义在这个库中
 #include <linux/string.h> // my_open()中的"strlen"用到了这个库
 #include <linux/module.h> // MODULE_LICENSE / AUTHOR / DESCRIPTION 用到的库
 #include <linux/init.h> // module_init() 用到的库 __init 和 __exit也在这里被定义了
+#include <linux/fs.h> // alloc_chrdev_region() / unregister_chrdev_region() 用到的库
+#include <linux/printk.h> // printk()函数用到的库
+#include <linux/cdev.h> // cdev.init() / .add() / .del() 用到的'字驱动'库
+
+#include <asm/uaccess.h> // 这个比较特殊，因为咱实验室用的就是arm架构的吸劈优，这个经过查询就是 /arch/arm/include/asm/uaccess.h
 
 // header files暂时不全，下节课继续补充
 /*Tips: 在定义的时候，"/linux 前面还会有个include"(e.g. <include/linux/module.h> )，但是我们可以偷懒不写owo...
