@@ -28,7 +28,7 @@ static dev_t devMasterNum; // 定好一块"存储空间"，类型为dev_t，用�
 
 // 以上三个"重define"参数 还有 "主设备号存储区" 正是 alloc_chrdev_region()所需要的
 
-static struct cdev dev; // 创建一个 字驱动表"存储结构体"(提供cdev.init()的"驱动表对象"的存储)
+static struct cdev * dev; // 创建一个 字驱动表"存储结构体"(提供cdev.init()的"驱动表对象"的存储)
 
 static int my_open(struct inode *inode, struct file *fp){
   // 具体实现"打开文件"的方法
@@ -105,7 +105,7 @@ int __init hellodriver_init(void){
     return returnValue; // 返回终止程序
   }
 
-  int major
+  int major;
   major = MAJOR(devMasterNum); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
   printk("设备" deviceName "初始化完成, 取得的主设备号为%d \n", major);
 
@@ -131,9 +131,10 @@ int __init hellodriver_init(void){
 }
 int __exit hellodriver_exit(void){
    // 模块在"卸载时"被调用 
-   cdev_del($dev); // 调用cdev_del()方法删除 对应的"字驱动表" (删驱动表)
+   cdev_del(dev); // 调用cdev_del()方法删除 对应的"字驱动表" (删驱动表)
    unregister_chrdev_region(devMasterNum, deviceCounts); // 释放该字驱动表"所占的空间" (删内部驱动设备)
    printk("文件(设备)" deviceName "已卸载...\n");
+   return 0;
 }
 
 module_init(hellodriver_init); // 指定模块的初始化函数 (上面定义好的)
