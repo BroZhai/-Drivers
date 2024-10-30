@@ -17,11 +17,9 @@
   因为一般 这个<include>库就会在makefile中配置好，因此这里就不用费劲去上面一个个的再加include了
 */ 
 
-// 成功的讲虚拟机的东西同步到了github上，bash命令搞死我了xwx
-
-#define startNumber 3; // 定好"次设备号"起始号
-#define deviceCounts 2; // 定好"次设备数量"
-#define deviceName "I'm HelloDriver"; // 定义好"设备名" (给人看的)
+#define startNumber 3 // 定好"次设备号"起始号
+#define deviceCounts 2 // 定好"次设备数量"
+#define deviceName "I'm HelloDriver" // 定义好"设备名" (给人看的)
 
 static char Kmsg[] = "这里是内核里面定义好的消息，准备通过copy_to_user()传给用户"; // my_read()函数就会读取这里的东西
 
@@ -97,7 +95,7 @@ int __init hellodriver_init(void){
    // 而如果static应用在"此方法"中的某个变量上，则该"本地变量"则会变成"全局变量"
 
   int returnValue;
-  returnValue = alloc_chrdev_region(&devnoStorage, startNumber, deviceCounts, deviceName);
+  returnValue = alloc_chrdev_region(&devMasterNum, startNumber, deviceCounts, deviceName);
   // 有关alloc_chrdev_region(设备号的"存放空间"(指针)，次设备号"起始点"，共有多少个不同的次设备号，该模块"人读的"名字)
   // 当模块成功申请到设备号时，会将其"申请成功的主设备号"进行返回[通常都>0] (上面的returnValue就是在接收主设备号的)
   // 简单来说，功能就是"定义存储次设备号，申请成功后传回主设备号"
@@ -107,7 +105,8 @@ int __init hellodriver_init(void){
     return returnValue; // 返回终止程序
   }
 
-  int major = MAJOR(devnoStorage); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
+  int major
+  major = MAJOR(devMasterNum); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
   printk("设备" deviceName "初始化完成, 取得的主设备号为%d \n", major);
 
   // 接下来，我们来看看如何建立(注册)一个 字驱动表
@@ -119,7 +118,7 @@ int __init hellodriver_init(void){
   
   // 一旦有了字驱动表，我们就可以往表里"add()设备"了
   int createResult; 
-  createResult = cdev.add(&dev, &devnoStorage, deviceCounts);
+  createResult = cdev.add(&dev, &devMasterNum, deviceCounts);
   // cdev.add(创建的字驱动"表", 设备的"主设备号", 共"多少个设备");
   // 如果设备在表中创建成功的话，会返回一个"非0"的值
   if (createResult == 0) {
@@ -130,10 +129,10 @@ int __init hellodriver_init(void){
   return 0; //所有的设备都被正确的加到了驱动表中，return 0 结束"初始化"代码段
 
 }
-int __exit hellodriver_init(void){
+int __exit hellodriver_exit(void){
    // 模块在"卸载时"被调用 
    cdev_del($dev); // 调用cdev_del()方法删除 对应的"字驱动表" (删驱动表)
-   unregister_chrdev_region(devnoStorage, deviceCounts); // 释放该字驱动表"所占的空间" (删内部驱动设备)
+   unregister_chrdev_region(devMasterNum, deviceCounts); // 释放该字驱动表"所占的空间" (删内部驱动设备)
    printk("文件(设备)" deviceName "已卸载...\n");
 }
 
