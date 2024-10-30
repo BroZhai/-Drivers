@@ -3,8 +3,9 @@
 // (Tips: 在Linux驱动文件时，我们所处的环境是"内核环境",所以一般"用户环境的库"我们就用不了力)
 
 
+#include <linux/kdev_t.h> // dev_t类型的定义，同时也是MAJOR() MINOR()的库
 #include <linux/cdev.h> // cdev.init() / .add() / .del() 用到的'字驱动'库
-#include <linux/types.h>  // dev_t size_t loft_t 等各种'奇怪的类型' 就被定义在这个库中
+#include <linux/types.h>  // size_t loft_t 等各种'奇怪的类型' 就被定义在这个库中
 #include <linux/string.h> // my_open()中的"strlen"用到了这个库
 #include <linux/module.h> // MODULE_LICENSE / AUTHOR / DESCRIPTION 用到的库
 #include <linux/init.h> // module_init() 用到的库 __init 和 __exit也在这里被定义了
@@ -108,18 +109,20 @@ int __init hellodriver_init(void){
 
   int major;
   major = MAJOR(devMasterNum); //从存储设备号的"空间"用 MAJOR()方法 取得其存储其存储的"主设备号"
-  printk("设备" deviceName "初始化完成, 取得的主设备号为%d \n", major);
+  int minor;
+  minor = MINOR(devMasterNum);
+  printk("设备" deviceName "初始化完成, 取得的主设备号MAJOR为 %d , 次设备号MINOR为\n %d", major, minor);
 
   // 接下来，我们来看看如何建立(注册)一个 字驱动表
-  my_dev.init(&my_dev, &fops); // 这里就相当于将这个"驱动文件"的 FDT表(操作请求) -> 系统SFT表(系统对应的操作方法) 做映射
+  cdev.init(&my_dev, &fops); // 这里就相当于将这个"驱动文件"的 FDT表(操作请求) -> 系统SFT表(系统对应的操作方法) 做映射
   // cdev.init(存储字驱动表的"结构体对象"，该字驱动的"操作项结构体" [不同的可用操作方法, SFT表 -> inode表])
 
   // 一旦上面的init完成，我们需要提前为将来存在里面的"设备"做一些额外的声明
-  my_dev.owner = THIS_MODULE; // 声明里面"设备"的所有者为该module(THIS_MODULE)
+  cdev.my_dev.owner = THIS_MODULE; // 声明里面"设备"的所有者为该module(THIS_MODULE)
   
   // 一旦有了字驱动表，我们就可以往表里"add()设备"了
   int createResult; 
-  createResult = my_dev.add(&my_dev, &devMasterNum, deviceCounts);
+  createResult = cdev.add(&my_dev, &devMasterNum, deviceCounts);
   // cdev.add(创建的字驱动"表", 设备的"主设备号", 共"多少个设备");
   // 如果设备在表中创建成功的话，会返回一个"非0"的值
   if (createResult == 0) {
