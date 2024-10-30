@@ -2,13 +2,14 @@
 // 咱来看看是这个"配置"囊个回事?
 // (Tips: 在Linux驱动文件时，我们所处的环境是"内核环境",所以一般"用户环境的库"我们就用不了力)
 
+
+#include <linux/cdev.h> // cdev.init() / .add() / .del() 用到的'字驱动'库
 #include <linux/types.h>  // dev_t size_t loft_t 等各种'奇怪的类型' 就被定义在这个库中
 #include <linux/string.h> // my_open()中的"strlen"用到了这个库
 #include <linux/module.h> // MODULE_LICENSE / AUTHOR / DESCRIPTION 用到的库
 #include <linux/init.h> // module_init() 用到的库 __init 和 __exit也在这里被定义了
 #include <linux/fs.h> // alloc_chrdev_region() / unregister_chrdev_region() 用到的库
 #include <linux/printk.h> // printk()函数用到的库
-#include <linux/cdev.h> // cdev.init() / .add() / .del() 用到的'字驱动'库
 
 #include <asm/uaccess.h> // 这个比较特殊，因为咱实验室用的就是arm架构的吸劈优，这个经过查询就是 /arch/arm/include/asm/uaccess.h
 
@@ -21,14 +22,14 @@
 #define deviceCounts 2 // 定好"次设备数量"
 #define deviceName "I'm HelloDriver" // 定义好"设备名" (给人看的)
 
+struct cdev my_dev; // 创建一个 字驱动表"存储结构体"(提供cdev.init()的"驱动表对象"的存储)
+
 static char Kmsg[] = "这里是内核里面定义好的消息，准备通过copy_to_user()传给用户"; // my_read()函数就会读取这里的东西
 
 static dev_t devMasterNum; // 定好一块"存储空间"，类型为dev_t，用其"地址"存储 请求成功返回的"主设备号"
 // 有关上面'static'关键字的补充: 这里在全局变量上 的static指 该变量"仅在本文件内生效" (Java 的 private)
 
 // 以上三个"重define"参数 还有 "主设备号存储区" 正是 alloc_chrdev_region()所需要的
-
-static struct cdev * dev; // 创建一个 字驱动表"存储结构体"(提供cdev.init()的"驱动表对象"的存储)
 
 static int my_open(struct inode *inode, struct file *fp){
   // 具体实现"打开文件"的方法
@@ -110,15 +111,15 @@ int __init hellodriver_init(void){
   printk("设备" deviceName "初始化完成, 取得的主设备号为%d \n", major);
 
   // 接下来，我们来看看如何建立(注册)一个 字驱动表
-  cdev.init(&dev, &fops); // 这里就相当于将这个"驱动文件"的 FDT表(操作请求) -> 系统SFT表(系统对应的操作方法) 做映射
+  my_dev.init(&my_dev, &fops); // 这里就相当于将这个"驱动文件"的 FDT表(操作请求) -> 系统SFT表(系统对应的操作方法) 做映射
   // cdev.init(存储字驱动表的"结构体对象"，该字驱动的"操作项结构体" [不同的可用操作方法, SFT表 -> inode表])
 
   // 一旦上面的init完成，我们需要提前为将来存在里面的"设备"做一些额外的声明
-  dev.owner = THIS_MODULE; // 声明里面"设备"的所有者为该module(THIS_MODULE)
+  my_dev.owner = THIS_MODULE; // 声明里面"设备"的所有者为该module(THIS_MODULE)
   
   // 一旦有了字驱动表，我们就可以往表里"add()设备"了
   int createResult; 
-  createResult = cdev.add(&dev, &devMasterNum, deviceCounts);
+  createResult = my_dev.add(&my_dev, &devMasterNum, deviceCounts);
   // cdev.add(创建的字驱动"表", 设备的"主设备号", 共"多少个设备");
   // 如果设备在表中创建成功的话，会返回一个"非0"的值
   if (createResult == 0) {
@@ -131,7 +132,7 @@ int __init hellodriver_init(void){
 }
 int __exit hellodriver_exit(void){
    // 模块在"卸载时"被调用 
-   cdev_del(dev); // 调用cdev_del()方法删除 对应的"字驱动表" (删驱动表)
+   cdev_del(&my_dev); // 调用cdev_del()方法删除 对应的"字驱动表" (删驱动表)
    unregister_chrdev_region(devMasterNum, deviceCounts); // 释放该字驱动表"所占的空间" (删内部驱动设备)
    printk("文件(设备)" deviceName "已卸载...\n");
    return 0;
