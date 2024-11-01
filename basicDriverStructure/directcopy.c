@@ -5,12 +5,15 @@
 #include <linux/printk.h>
 #include <linux/cdev.h>
 #include <linux/string.h>
+#include <asm-generic/uaccess.h>
 
 #define S_N 0
 #define N_D 2
 #define DRIVER_NAME "Hello world driver"
 
 static dev_t mydevno;
+
+static char msg[] = "This is the message in msg.";
 
 int myopen(struct inode* inodep, struct file *fp){
     printk("Driver" DRIVER_NAME " opened. \n");
@@ -39,30 +42,36 @@ int myclose(struct inode* inodep, struct file *fp){
 }
 
 struct file_operations myfops = {
-    owner: THIS_MODULE;
-    open: myclose();
-    read: myread();
-    release: myclose();
+    owner: THIS_MODULE,
+    open: myopen,
+    read: myread,
+    release: myclose,
 };
 
 struct cdev mydev;
 
 static int __init helloworld_init(void) {
     int ret;
+    unsigned int major; //怎么多了个unsinged?
+    unsigned int minor;
+
     // register a major number
     ret = alloc_chrdev_region(&mydevno, S_N, N_D, DRIVER_NAME);
     if (ret < 0){
         printk("alloc_chrdev_region failed. Driver" DRIVER_NAME "cannot get major number. \n");
         return ret;
     }
-    unsigned int major = MAJOR(mydevno); //怎么多了个unsinged?
-    unsigned int minor = MINOR(mydevno);
+
+    major = MAJOR(mydevno);
+    minor = MINOR(mydevno);
+
+    printk("Driver " DRIVER_NAME "initialized (major number = %d, minor number = %d). \n", major, minor);
     printk("Driver " DRIVER_NAME "initialized (major number = %d, minor number = %d). \n", major, minor);
 
     //register a char device
-    cdev_init(&mydev, mydevno);
-    cdev.owner = THIS_MODULE;
-    ret = cdev_add($mydev, mydevno, N_D);
+    cdev_init(&mydev, &myfops);
+    mydev.owner = THIS_MODULE;
+    ret = cdev_add(&mydev, mydevno, N_D);
     if (ret) {
         printk("Driver " DRIVER_NAME "register fail. \n");
         return ret;
@@ -73,7 +82,7 @@ static int __init helloworld_init(void) {
 
 static void __exit helloworld_exit(void) {
     cdev_del(&mydev);
-    unregister_chrdev_region(devno, N_D);
+    unregister_chrdev_region(mydevno, N_D);
     printk("Driver" DRIVER_NAME "unloaded. \n");
 }
 
@@ -82,4 +91,4 @@ module_exit(helloworld_exit);
 
 MODULE_LICENSE("MIT");
 MODULE_AUTHOR("TechNiko_Pancake");
-MODULE_DESCRIPTION("这个一份重新照抄的驱动代码，用于查错")
+MODULE_DESCRIPTION("这个一份重新照抄的驱动代码，用于查错");
