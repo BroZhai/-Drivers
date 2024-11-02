@@ -10,33 +10,24 @@
 #include <linux/string.h>
 #include <asm-generic/uaccess.h>
 
+// 控制板子上的LED用到了以下的两个"新库"
+#include <linyx/gpio.h>
+#include <mach/gpio.h>
+
 #define S_N 0
 #define N_D 2
-#define DRIVER_NAME "Hello world driver"
+#define DRIVER_NAME "LED_Driver"
+#define LED1 S5PV210_GPJ2(0) //定义咱开发板上的LED指示灯
+#define LED_ON 0 // 这里有点'反直觉' (板子定义的0是高电压)
+#define LED_OFF 1 // 1 低电压(关)
 
 static dev_t mydevno;
 
 static char msg[] = "This is the message in msg.";
 
 int myopen(struct inode* inodep, struct file *fp){
-    printk("Driver" DRIVER_NAME " opened. \n");
+    printk("Driver " DRIVER_NAME " opened. \n");
     return 0;
-}
-
-int myread(struct file *fp, char __user * buf, size_t count, loff_t *position){
-    int num;
-    int ret;
-    if (count < strlen(msg)){
-        num = count;
-    } else {
-        num = strlen(msg);
-    }
-    ret = copy_to_user(buf, msg, num);
-    if(ret){
-        printk("Fail to copy data from the kernal space to the user space. \n");
-        return -1;
-    }
-    return num;
 }
 
 int myclose(struct inode* inodep, struct file *fp){
@@ -44,10 +35,38 @@ int myclose(struct inode* inodep, struct file *fp){
     return 0;
 }
 
+int mywrite(struct file *fp, char __user * buf, size_t count, loff_t * position){
+    /*fp: 指向的用户空间"文件对象"
+     buf: 指向用户空间缓冲区的指针
+     count: 限定"写入信息的多少"
+     position: 内核缓存中'写入指针'的位置 (从哪里准备开始写)
+
+     (整体的实现逻辑就是一个简单的二元判断开关)
+    */ 
+   // 首先的逻辑便是从板子上读取到 "板子灯" 的状态 
+   char userLed_status;
+   int copyStatus;
+   // copy_from_user(&本地接收的对象[地址空间], 用户的缓存, 读入多少[字节整数]);
+   copyStatus = copy_from_user(&userLed_status, buf，1);
+
+   if(copyStatus!=0){ //默认可以直接写成if(copyStatus)，C里面只要不是0一律视为true :p
+     printk("尝试获取LED的状态时发生了错误OAO!!!");
+   } 
+
+   if(userLed_status==1){
+    // 读到的LED处于关闭状态
+    gpio_set_value(LED1, LED_ON); // 这个方法就是厂家定义的控制方法，课上直接照抄的
+   }else{
+    // 读到的LED处于打开状态
+    gpio_set_value(LED1, LED_OFF);
+   }
+
+}
+
 struct file_operations myfops = {
     owner: THIS_MODULE,
     open: myopen,
-    read: myread,
+    write: mywrite,
     release: myclose,
 };
 
@@ -94,4 +113,4 @@ module_exit(helloworld_exit);
 
 MODULE_LICENSE("MIT");
 MODULE_AUTHOR("TechNiko_Pancake");
-MODULE_DESCRIPTION("这个一份重新照抄的驱动代码，用于查错");
+MODULE_DESCRIPTION("直接照着代码小改的一个LED控制驱动");
