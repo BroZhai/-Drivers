@@ -11,7 +11,7 @@
 #include <asm-generic/uaccess.h>
 
 // 控制板子上的LED用到了以下的两个"新库"
-#include <linyx/gpio.h>
+#include <linux/gpio.h>
 #include <mach/gpio.h>
 
 #define S_N 0
@@ -47,7 +47,7 @@ int mywrite(struct file *fp, char __user * buf, size_t count, loff_t * position)
    char userLed_status;
    int copyStatus;
    // copy_from_user(&本地接收的对象[地址空间], 用户的缓存, 读入多少[字节整数]);
-   copyStatus = copy_from_user(&userLed_status, buf，1);
+   copyStatus = copy_from_user(&userLed_status, buf, 1);
 
    if(copyStatus!=0){ //默认可以直接写成if(copyStatus)，C里面只要不是0一律视为true :p
      printk("尝试获取LED的状态时发生了错误OAO!!!");
@@ -56,11 +56,12 @@ int mywrite(struct file *fp, char __user * buf, size_t count, loff_t * position)
    if(userLed_status==1){
     // 读到的LED处于关闭状态
     gpio_set_value(LED1, LED_ON); // 这个方法就是厂家定义的控制方法，课上直接照抄的
+    printk("LED1现已打开");
    }else{
     // 读到的LED处于打开状态
     gpio_set_value(LED1, LED_OFF);
+    printk("LED1现已关闭");
    }
-
 }
 
 struct file_operations myfops = {
@@ -72,7 +73,7 @@ struct file_operations myfops = {
 
 struct cdev mydev;
 
-static int __init helloworld_init(void) {
+static int __init led1_init(void) {
     int ret;
     unsigned int major; //怎么多了个unsinged?
     unsigned int minor;
@@ -102,14 +103,14 @@ static int __init helloworld_init(void) {
 
 }
 
-static void __exit helloworld_exit(void) {
+static void __exit led1_exit(void) {
     cdev_del(&mydev);
     unregister_chrdev_region(mydevno, N_D);
     printk("Driver" DRIVER_NAME "unloaded. \n");
 }
 
-module_init(helloworld_init);
-module_exit(helloworld_exit);
+module_init(led1_init);
+module_exit(led1_exit);
 
 MODULE_LICENSE("MIT");
 MODULE_AUTHOR("TechNiko_Pancake");
