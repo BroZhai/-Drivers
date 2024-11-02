@@ -23,8 +23,6 @@
 
 static dev_t mydevno;
 
-static char msg[] = "This is the message in msg.";
-
 int myopen(struct inode* inodep, struct file *fp){
     printk("Driver " DRIVER_NAME " opened. \n");
     return 0;
@@ -112,6 +110,6 @@ static void __exit led1_exit(void) {
 module_init(led1_init);
 module_exit(led1_exit);
 
-MODULE_LICENSE("MIT");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("TechNiko_Pancake");
 MODULE_DESCRIPTION("直接照着代码小改的一个LED控制驱动");
